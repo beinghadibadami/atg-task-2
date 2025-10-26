@@ -1,0 +1,46 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: hadibadami
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: python-mail
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: mailing-service
+
+custom:
+  wsgi:
+    app: app.app
+  # Keep this block for built-in python requirements support
+  pythonRequirements:
+    dockerizePip: false
+    pythonBin: python3
+  serverless-offline:
+    httpPort: 3000
+    printOutput: true
+    host: localhost
+    noPrependStageInUrl: true  # Removes /dev prefix
+    noTimeout: true           # Disables timeout for development
+
+provider:
+  name: aws
+  runtime: python3.12
+  timeout: 60  # Fixed: added space after colon
+  environment:
+    GMAIL_EMAIL: ${env:GMAIL_EMAIL}
+    GMAIL_APP_PASSWORD: ${env:GMAIL_APP_PASSWORD}
+    SMTP_SERVER: ${env:SMTP_SERVER, 'smtp.gmail.com'}
+    SMTP_PORT: ${env:SMTP_PORT, '587'}
+
+functions:
+  api:
+    handler: wsgi_handler.handler
+    timeout: 60  # Function-level timeout
+    events:
+      - http:
+          path: /
+          method: ANY
+      - http:
+          path: /{proxy+}
+          method: ANY
+
+plugins:
+  - serverless-wsgi
+  - serverless-offline
